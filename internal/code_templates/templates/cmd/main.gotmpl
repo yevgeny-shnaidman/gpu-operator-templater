@@ -31,7 +31,7 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
 	kmmv1beta1 "github.com/rh-ecosystem-edge/kernel-module-management/api/v1beta1"
-	dc${API_VERSION} "${REPO}/api/${API_VERSION}"
+	dc{{.APIVersion}} "{{.Repo}}/api/{{.APIVersion}}"
 	"github.com/yevgeny-shnaidman/amd-gpu-operator/internal/cmd"
 	"github.com/yevgeny-shnaidman/amd-gpu-operator/internal/config"
 	"github.com/yevgeny-shnaidman/amd-gpu-operator/internal/controllers"
@@ -49,7 +49,7 @@ var (
 
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
-	utilruntime.Must(dc${API_VERSION}.AddToScheme(scheme))
+	utilruntime.Must(dc{{.APIVersion}}.AddToScheme(scheme))
 	utilruntime.Must(kmmv1beta1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
@@ -64,7 +64,7 @@ func main() {
 
 	flag.Parse()
 
-	logger := textlogger.NewLogger(logConfig).WithName("${VENDOR}-gpu")
+	logger := textlogger.NewLogger(logConfig).WithName("{{.Vendor}}-gpu")
 
 	ctrl.SetLogger(logger)
 

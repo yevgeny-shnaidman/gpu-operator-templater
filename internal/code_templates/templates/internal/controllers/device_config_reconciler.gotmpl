@@ -21,10 +21,10 @@ import (
 	"fmt"
 
 	kmmv1beta1 "github.com/rh-ecosystem-edge/kernel-module-management/api/v1beta1"
-	${VENDOR}${VERSION} "${REPO}/api/${VERSION}"
-	"${REPO}/internal/kmmmodule"
-	"${REPO}/internal/nodelabeller"
-	"${REPO}/internal/nodemetrics"
+	{{.Vendor}}{{.APIVersion}} "{{.Repo}}/api/{{.APIVersion}}"
+	"{{.Repo}}/internal/kmmmodule"
+	"{{.Repo}}/internal/nodelabeller"
+	"{{.Repo}}/internal/nodemetrics"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -38,7 +38,7 @@ import (
 
 const (
 	DeviceConfigReconcilerName = "DriverAndPluginReconciler"
-	deviceConfigFinalizer      = "${VENDOR}.node.kubernetes.io/deviceconfig-finalizer"
+	deviceConfigFinalizer      = "{{.Vendor}}.node.kubernetes.io/deviceconfig-finalizer"
 )
 
 // ModuleReconciler reconciles a Module object
@@ -60,16 +60,16 @@ func NewDeviceConfigReconciler(
 // SetupWithManager sets up the controller with the Manager.
 func (r *DeviceConfigReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&${VENDOR}${VERSION}.DeviceConfig{}).
+		For(&{{.Vendor}}{{.APIVersion}}.DeviceConfig{}).
 		Owns(&kmmv1beta1.Module{}).
 		Owns(&appsv1.DaemonSet{}).
 		Named(DeviceConfigReconcilerName).
 		Complete(r)
 }
 
-//+kubebuilder:rbac:groups=${GROUP},resources=deviceconfigs,verbs=get;list;watch;create;patch;update
+//+kubebuilder:rbac:groups={{.Group}},resources=deviceconfigs,verbs=get;list;watch;create;patch;update
 //+kubebuilder:rbac:groups=kmm.sigs.x-k8s.io,resources=modules,verbs=get;list;watch;create;patch;update;delete
-//+kubebuilder:rbac:groups=${GROUP},resources=deviceconfigs/finalizers,verbs=update
+//+kubebuilder:rbac:groups={{.Group}},resources=deviceconfigs/finalizers,verbs=update
 //+kubebuilder:rbac:groups=kmm.sigs.x-k8s.io,resources=modules/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=core,resources=configmaps,verbs=create;delete;get;list;patch;watch;create
 //+kubebuilder:rbac:groups=apps,resources=daemonsets,verbs=create;delete;get;list;patch;watch
@@ -133,12 +133,12 @@ func (r *DeviceConfigReconciler) Reconcile(ctx context.Context, req ctrl.Request
 //go:generate mockgen -source=device_config_reconciler.go -package=controllers -destination=mock_device_config_reconciler.go deviceConfigReconcilerHelperAPI
 type deviceConfigReconcilerHelperAPI interface {
 	getRequestedDeviceConfig(ctx context.Context, namespacedName types.NamespacedName) (*amdv1alpha1.DeviceConfig, error)
-	finalizeDeviceConfig(ctx context.Context, devConfig *${VENDOR}${VERSION}.DeviceConfig) error
-	setFinalizer(ctx context.Context, devConfig *${VENDOR}${VERSION}.DeviceConfig) error
-	handleKMMModule(ctx context.Context, devConfig *${VENDOR}${VERSION}.DeviceConfig) error
-	handleBuildConfigMap(ctx context.Context, devConfig *${VENDOR}${VERSION}.DeviceConfig) error
-	handleNodeLabeller(ctx context.Context, devConfig *${VENDOR}${VERSION}.DeviceConfig) error
-	handleNodeMetrics(ctx context.Context, devConfig *${VENDOR}${VERSION}.DeviceConfig) error
+	finalizeDeviceConfig(ctx context.Context, devConfig *{{.Vendor}}{{.APIVersion}}.DeviceConfig) error
+	setFinalizer(ctx context.Context, devConfig *{{.Vendor}}{{.APIVersion}}.DeviceConfig) error
+	handleKMMModule(ctx context.Context, devConfig *{{.Vendor}}{{.APIVersion}}.DeviceConfig) error
+	handleBuildConfigMap(ctx context.Context, devConfig *{{.Vendor}}{{.APIVersion}}.DeviceConfig) error
+	handleNodeLabeller(ctx context.Context, devConfig *{{.Vendor}}{{.APIVersion}}.DeviceConfig) error
+	handleNodeMetrics(ctx context.Context, devConfig *{{.Vendor}}{{.APIVersion}}.DeviceConfig) error
 }
 
 type deviceConfigReconcilerHelper struct {
@@ -160,8 +160,8 @@ func newDeviceConfigReconcilerHelper(client client.Client,
 	}
 }
 
-func (dcrh *deviceConfigReconcilerHelper) getRequestedDeviceConfig(ctx context.Context, namespacedName types.NamespacedName) (*${VENDOR}${VERSION}.DeviceConfig, error) {
-	devConfig := ${VENDOR}${VERSION}.DeviceConfig{}
+func (dcrh *deviceConfigReconcilerHelper) getRequestedDeviceConfig(ctx context.Context, namespacedName types.NamespacedName) (*{{.Vendor}}{{.APIVersion}}.DeviceConfig, error) {
+	devConfig := {{.Vendor}}{{.APIVersion}}.DeviceConfig{}
 
 	if err := dcrh.client.Get(ctx, namespacedName, &devConfig); err != nil {
 		return nil, fmt.Errorf("failed to get DeviceConfig %s: %w", namespacedName, err)
@@ -169,7 +169,7 @@ func (dcrh *deviceConfigReconcilerHelper) getRequestedDeviceConfig(ctx context.C
 	return &devConfig, nil
 }
 
-func (dcrh *deviceConfigReconcilerHelper) setFinalizer(ctx context.Context, devConfig *${VENDOR}${VERSION}.DeviceConfig) error {
+func (dcrh *deviceConfigReconcilerHelper) setFinalizer(ctx context.Context, devConfig *{{.Vendor}}{{.APIVersion}}.DeviceConfig) error {
 	if controllerutil.ContainsFinalizer(devConfig, deviceConfigFinalizer) {
 		return nil
 	}
@@ -179,7 +179,7 @@ func (dcrh *deviceConfigReconcilerHelper) setFinalizer(ctx context.Context, devC
 	return dcrh.client.Patch(ctx, devConfig, client.MergeFrom(devConfigCopy))
 }
 
-func (dcrh *deviceConfigReconcilerHelper) finalizeDeviceConfig(ctx context.Context, devConfig *${VENDOR}${VERSION}.DeviceConfig) error {
+func (dcrh *deviceConfigReconcilerHelper) finalizeDeviceConfig(ctx context.Context, devConfig *{{.Vendor}}{{.APIVersion}}.DeviceConfig) error {
 	logger := log.FromContext(ctx)
 
 	nlDS := appsv1.DaemonSet{}
@@ -233,7 +233,7 @@ func (dcrh *deviceConfigReconcilerHelper) finalizeDeviceConfig(ctx context.Conte
 	return dcrh.client.Delete(ctx, &mod)
 }
 
-func (dcrh *deviceConfigReconcilerHelper) handleBuildConfigMap(ctx context.Context, devConfig *${VENDOR}${VERSION}.DeviceConfig) error {
+func (dcrh *deviceConfigReconcilerHelper) handleBuildConfigMap(ctx context.Context, devConfig *{{.Vendor}}{{.APIVersion}}.DeviceConfig) error {
 	buildDockerfileCM := &v1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: devConfig.Namespace,
@@ -253,7 +253,7 @@ func (dcrh *deviceConfigReconcilerHelper) handleBuildConfigMap(ctx context.Conte
 	return err
 }
 
-func (dcrh *deviceConfigReconcilerHelper) handleKMMModule(ctx context.Context, devConfig *${VENDOR}${VERSION}.DeviceConfig) error {
+func (dcrh *deviceConfigReconcilerHelper) handleKMMModule(ctx context.Context, devConfig *{{.Vendor}}{{.APIVersion}}.DeviceConfig) error {
 	kmmMod := &kmmv1beta1.Module{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: devConfig.Namespace,
@@ -273,7 +273,7 @@ func (dcrh *deviceConfigReconcilerHelper) handleKMMModule(ctx context.Context, d
 
 }
 
-func (dcrh *deviceConfigReconcilerHelper) handleNodeLabeller(ctx context.Context, devConfig *${VENDOR}${VERSION}.DeviceConfig) error {
+func (dcrh *deviceConfigReconcilerHelper) handleNodeLabeller(ctx context.Context, devConfig *{{.Vendor}}{{.APIVersion}}.DeviceConfig) error {
 	ds := &appsv1.DaemonSet{
 		ObjectMeta: metav1.ObjectMeta{Namespace: devConfig.Namespace, Name: devConfig.Name + "-node-labeller"},
 	}
@@ -289,7 +289,7 @@ func (dcrh *deviceConfigReconcilerHelper) handleNodeLabeller(ctx context.Context
 	return err
 }
 
-func (dcrh *deviceConfigReconcilerHelper) handleNodeMetrics(ctx context.Context, devConfig *${VENDOR}${VERSION}.DeviceConfig) error {
+func (dcrh *deviceConfigReconcilerHelper) handleNodeMetrics(ctx context.Context, devConfig *{{.Vendor}}{{.APIVersion}}.DeviceConfig) error {
 	ds := &appsv1.DaemonSet{
 		ObjectMeta: metav1.ObjectMeta{Namespace: devConfig.Namespace, Name: devConfig.Name + "-node-metrics"},
 	}
@@ -305,6 +305,6 @@ func (dcrh *deviceConfigReconcilerHelper) handleNodeMetrics(ctx context.Context,
 	return err
 }
 
-func getDockerfileCMName(devConfig *${VENDOR}${VERSION}.DeviceConfig) string {
+func getDockerfileCMName(devConfig *{{.Vendor}}{{.APIVersion}}.DeviceConfig) string {
 	return "dockerfile-" + devConfig.Name
 }
