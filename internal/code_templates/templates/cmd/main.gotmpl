@@ -31,13 +31,13 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
 	kmmv1beta1 "github.com/rh-ecosystem-edge/kernel-module-management/api/v1beta1"
-	dc{{.APIVersion}} "{{.Repo}}/api/{{.APIVersion}}"
-	"github.com/yevgeny-shnaidman/amd-gpu-operator/internal/cmd"
-	"github.com/yevgeny-shnaidman/amd-gpu-operator/internal/config"
-	"github.com/yevgeny-shnaidman/amd-gpu-operator/internal/controllers"
-	"github.com/yevgeny-shnaidman/amd-gpu-operator/internal/kmmmodule"
-	"github.com/yevgeny-shnaidman/amd-gpu-operator/internal/nodelabeller"
-	"github.com/yevgeny-shnaidman/amd-gpu-operator/internal/nodemetrics"
+	dc{{.APIVersion}} "{{.CodeRepo}}/api/{{.APIVersion}}"
+	"{{.CodeRepo}}/internal/cmd"
+	"{{.CodeRepo}}/internal/config"
+	"{{.CodeRepo}}/internal/controllers"
+	"{{.CodeRepo}}/internal/kmmmodule"
+	"{{.CodeRepo}}/internal/nodelabeller"
+	"{{.CodeRepo}}/internal/nodemetrics"
 	//+kubebuilder:scaffold:imports
 )
 

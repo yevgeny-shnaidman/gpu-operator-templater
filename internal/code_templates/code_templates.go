@@ -3,47 +3,46 @@ package code_templates
 import (
 	"embed"
 	"fmt"
-	"gopkg.in/yaml.v3"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
 	"text/template"
+
+	"github.com/yevgeny-shnaidman/gpu-operator-template/internal/config"
 )
 
 type TemplatesData struct {
-	Vendor      string `yaml:"vendor"`
-	Repo        string `yaml:"repo"`
-	APIVersion  string `yaml:"apiversion"`
-	Group       string `yaml:"group"`
-	PCIVendorID string `yaml:"pcivendorid"`
+	Vendor                   string `yaml:"vendor"`
+	Repo                     string `yaml:"repo"`
+	APIVersion               string `yaml:"apiVersion"`
+	Group                    string `yaml:"group"`
+	PCIVendorID              string `yaml:"pciVendorID"`
+	KernelModuleName         string `yaml:"kernelModuleName"`
+	DefaultDevicePluginImage string `yaml:"defaultDevicePluginImage"`
+	ImageFirmwarePath        string `yaml:"imageFirmwarePath"`
+	DefaultDriverVersion     string `yaml:"defaultDriverVersion"`
+	DefaultNodeLabellerImage string `yaml:"defaultNodeLabellerImage"`
+	NodeMetricsImage         string `yaml:"nodeMetricsImage"`
 }
+
+const (
+	apiVersionDir = "API_VERSION"
+)
 
 var (
 	//go:embed templates
 	templatesFS embed.FS
-	tmpl        = template.Must(
-		template.ParseFS(templatesFS, "templates/*/*.gotmpl", "templates/*/*/*.gotmpl"),
-	)
 )
 
-func RunTemplates(valuesFilePath string) error {
-	var substValues TemplatesData
-	yamlFile, err := os.ReadFile(valuesFilePath)
-	if err != nil {
-		return fmt.Errorf("failed to access values file %s: error %v", valuesFilePath, err)
-	}
-	err = yaml.Unmarshal(yamlFile, &substValues)
-	if err != nil {
-		return fmt.Errorf("failed to unmarshal the values file %s into struct: error %v", valuesFilePath, err)
-	}
-	err = fs.WalkDir(templatesFS, "templates", func(path string, d fs.DirEntry, err error) error {
+func RunTemplates(config *config.TemplaterConfig) error {
+	err := fs.WalkDir(templatesFS, "templates", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
 
 		// get the path in the target
-		targetPath := strings.Replace(strings.TrimPrefix(path, "templates/"), "gotmpl", "go", 1)
+		targetPath := getTargetPath(path, config)
 		if d.IsDir() {
 			os.Mkdir(targetPath, 0750)
 		} else {
@@ -51,8 +50,11 @@ func RunTemplates(valuesFilePath string) error {
 			if err != nil {
 				return fmt.Errorf("failed to create file %s: error %v", targetPath, err)
 			}
-			templateFile := filepath.Base(path)
-			err = tmpl.ExecuteTemplate(targetFile, templateFile, substValues)
+			tmpl, err := template.ParseFS(templatesFS, path)
+			if err != nil {
+				return fmt.Errorf("failed to parse file %s: %w", path, err)
+			}
+			err = tmpl.ExecuteTemplate(targetFile, filepath.Base(path)/*templateFile*/, *config)
 			if err != nil {
 				return fmt.Errorf("failed to parse templates for file %s: err %v", path, err)
 			}
@@ -61,4 +63,14 @@ func RunTemplates(valuesFilePath string) error {
 		return nil
 	})
 	return err
+}
+
+func getTargetPath(sourcePath string, values *config.TemplaterConfig) string {
+	trimmedSourcePath := strings.TrimPrefix(sourcePath, "templates/")
+	if trimmedSourcePath == "Dockerfile.skipper-repo" {
+		return strings.Replace(trimmedSourcePath, "skipper-repo", values.RepoName, 1) + "-build"
+	} 
+	// replace API_VERSION with the real api version
+	versionedSourcePath := strings.Replace(trimmedSourcePath, apiVersionDir, values.APIVersion, 1)
+	return strings.Replace(versionedSourcePath, "gotmpl", "go", 1)
 }

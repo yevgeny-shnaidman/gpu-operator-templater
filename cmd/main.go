@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/yevgeny-shnaidman/gpu-operator-template/internal/config"
 	"github.com/yevgeny-shnaidman/gpu-operator-template/internal/code_templates"
 	"github.com/yevgeny-shnaidman/gpu-operator-template/internal/operator_sdk"
 	"os"
@@ -11,13 +12,19 @@ import (
 func main() {
 	valuesFilePath := flag.String("f", "", "files with values constituations")
 	flag.Parse()
-	err := operator_sdk.InitializeRepo()
+
+	configData, err := config.InitConfigData(*valuesFilePath)
 	if err != nil {
-		fmt.Printf("failed to initialize repo with operator-sdk, error %s\n", err)
+		fmt.Printf("failed to initialize configuration: %s\n", err)
+		os.Exit(-1)
+	}
+	err = operator_sdk.InitializeRepo(configData)
+	if err != nil {
+		fmt.Printf("failed to initialize repo with operator-sdk: %s\n", err)
 		os.Exit(-1)
 	}
 
-	err = code_templates.RunTemplates(*valuesFilePath)
+	err = code_templates.RunTemplates(configData)
 	if err != nil {
 		fmt.Printf("failed to run templates and create the files in the target repo, error %s\n", err)
 		os.Exit(-1)

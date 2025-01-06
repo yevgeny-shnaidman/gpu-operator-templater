@@ -21,10 +21,10 @@ import (
 	"fmt"
 
 	kmmv1beta1 "github.com/rh-ecosystem-edge/kernel-module-management/api/v1beta1"
-	{{.Vendor}}{{.APIVersion}} "{{.Repo}}/api/{{.APIVersion}}"
-	"{{.Repo}}/internal/kmmmodule"
-	"{{.Repo}}/internal/nodelabeller"
-	"{{.Repo}}/internal/nodemetrics"
+	{{.Vendor}}{{.APIVersion}} "{{.CodeRepo}}/api/{{.APIVersion}}"
+	"{{.CodeRepo}}/internal/kmmmodule"
+	"{{.CodeRepo}}/internal/nodelabeller"
+	"{{.CodeRepo}}/internal/nodemetrics"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -132,7 +132,7 @@ func (r *DeviceConfigReconciler) Reconcile(ctx context.Context, req ctrl.Request
 
 //go:generate mockgen -source=device_config_reconciler.go -package=controllers -destination=mock_device_config_reconciler.go deviceConfigReconcilerHelperAPI
 type deviceConfigReconcilerHelperAPI interface {
-	getRequestedDeviceConfig(ctx context.Context, namespacedName types.NamespacedName) (*amdv1alpha1.DeviceConfig, error)
+	getRequestedDeviceConfig(ctx context.Context, namespacedName types.NamespacedName) (*{{.Vendor}}{{.APIVersion}}.DeviceConfig, error)
 	finalizeDeviceConfig(ctx context.Context, devConfig *{{.Vendor}}{{.APIVersion}}.DeviceConfig) error
 	setFinalizer(ctx context.Context, devConfig *{{.Vendor}}{{.APIVersion}}.DeviceConfig) error
 	handleKMMModule(ctx context.Context, devConfig *{{.Vendor}}{{.APIVersion}}.DeviceConfig) error

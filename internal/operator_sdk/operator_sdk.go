@@ -7,12 +7,14 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+
+	"github.com/yevgeny-shnaidman/gpu-operator-template/internal/config"
 )
 
 //go:embed binaries/operator-sdk
 var sdkBinary embed.FS
 
-func InitializeRepo() error {
+func InitializeRepo(config *config.TemplaterConfig) error {
 	// Extract the operator-sdk binary
 	sdkPath := filepath.Join(os.TempDir(), "operator-sdk")
 	err := os.WriteFile(sdkPath, readBinaryFile("binaries/operator-sdk"), 0755)
@@ -20,17 +22,28 @@ func InitializeRepo() error {
 		fmt.Errorf("failed to  extract operator-sdk: %v", err)
 	}
 
-	err = runInit(sdkPath)
+	err = runInit(sdkPath, config)
 	if err != nil {
 		return fmt.Errorf("failed to run runInit: %v", err)
 	}
 
-	return runCreateAPI(sdkPath)
+	err = runCreateAPI(sdkPath, config)
+	if err != nil {
+		return fmt.Errorf("failed to run runCreateAPI: %v", err)
+	}
+
+	return cleanup()
 }
 
-func runInit(operatorSDKPath string) error {
+func runInit(operatorSDKPath string, config *config.TemplaterConfig) error {
 	// initialize the repo
-	cmd := exec.Command(operatorSDKPath, "init", "--domain=sigs.x-k8s.io", "--repo=github.com/yevgeny-shnaidman/test-gpu-operator", "--skip-go-version-check")
+	params := []string{
+		"init",
+		"--domain=" + config.Domain,
+		"--repo=" + config.CodeRepo,
+		"--skip-go-version-check",
+	}
+	cmd := exec.Command(operatorSDKPath, params...)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("failed running operator-sdk init, output %s: %v", output, err)
@@ -38,13 +51,26 @@ func runInit(operatorSDKPath string) error {
 	return nil
 }
 
-func runCreateAPI(operatorSDKPath string) error {
-	cmd := exec.Command(operatorSDKPath, "create", "api", "--controller=false", "--group=amd", "--kind=DeviceConfig", "--resource=true", "--version=v1alpha1")
+func runCreateAPI(operatorSDKPath string, config *config.TemplaterConfig) error {
+	params := []string {
+		"create",
+		"api",
+		"--controller=false",
+		"--group=" + config.Group,
+		"--kind=DeviceConfig",
+		"--resource=true",
+		"--version=" + config.APIVersion,
+	}
+	cmd := exec.Command(operatorSDKPath, params...)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("failed running operator-sdk create api, output %s: %v", output, err)
 	}
 	return nil
+}
+
+func cleanup() error {
+	return os.Remove("main.go") 
 }
 
 // Hhelper function to read binary file
