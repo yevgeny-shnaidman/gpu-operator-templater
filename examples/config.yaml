@@ -15,7 +15,7 @@ kernelModuleName: testgpu
 # default device plugin image: will be used in case not defined in the DeviceConfig
 defaultDevicePluginImage: rocm/k8s-device-plugin 
 # the path to the firmware inside the container image
-imageFirmwarePath: firmware/updates
+imageFirmwarePath: testFirmwareDir/updates
 # default driver version, will be used as a tag the image
 defaultDriverVersion: el9-6.1.1
 # default node labeller image to be used in case it is not defined in the DeviceConfig

@@ -57,7 +57,7 @@ var _ = Describe("setKMMModuleLoader", func() {
 		expectedMod.Spec.ModuleLoader.Container.KernelMappings[0].ContainerImage = fmt.Sprintf(defaultDriversImageTemplate, defaultDriversVersion)
 		expectedMod.Spec.ModuleLoader.Container.KernelMappings[0].Build.DockerfileConfigMap.Name = "dockerfile-" + input.Name
 		expectedMod.Spec.ModuleLoader.Container.KernelMappings[0].Build.BuildArgs[0].Value = defaultDriversVersion
-		expectedMod.Spec.Selector = map[string]string{"feature.node.kubernetes.io/pci-1002.present": "true"}
+		expectedMod.Spec.Selector = map[string]string{"feature.node.kubernetes.io/pci-{{.PCIVendorID}}.present": "true"}
 
 		err = setKMMModuleLoader(&mod, &input)
 

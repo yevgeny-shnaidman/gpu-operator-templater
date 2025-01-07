@@ -7,18 +7,19 @@ spec:
   moduleLoader:
     container:
       modprobe:
-        moduleName: amdgpu
-        firmwarePath: firmwareDir/updates
+        moduleName: {{.KernelModuleName}}
+        firmwarePath: {{.ImageFirmwarePath}}
       kernelMappings:
         - regexp: "^.+$"
           containerImage: driversImage
-          InTreeModuleToRemove: amdgpu
+          inTreeModulesToRemove:
+          - {{.KernelModuleName}}
           build:
             buildArgs:
               - name: DRIVERS_VERSION
                 value: driversVersion
             dockerfileConfigMap:
               name: dockerfile
-    serviceAccountName: "amd-gpu-operator-kmm-module-loader"
+    serviceAccountName: "{{.Vendor}}-gpu-operator-kmm-module-loader"
   selector:
-    feature.node.kubernetes.io/pci-1002.present: "true"
+    feature.node.kubernetes.io/pci-{{.PCIVendorID}}.present: "true"
