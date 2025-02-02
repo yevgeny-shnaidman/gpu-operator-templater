@@ -26,18 +26,18 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	kmmv1beta1 "github.com/rh-ecosystem-edge/kernel-module-management/api/v1beta1"
-	{{.Vendor}}{{.APIVersion}} "{{.CodeRepo}}/api/{{.APIVersion}}"
+	{{.API.Vendor}}{{.API.Version}} "{{.API.CodeRepo}}/api/{{.API.Version}}"
 )
 
 const (
 	kubeletDevicePluginsVolumeName = "kubelet-device-plugins"
 	kubeletDevicePluginsPath       = "/var/lib/kubelet/device-plugins"
 	nodeVarLibFirmwarePath         = "/var/lib/firmware"
-	gpuDriverModuleName            = "{{.KernelModuleName}}"
-	imageFirmwarePath              = "{{.ImageFirmwarePath}}"
-	defaultDevicePluginImage       = "{{.DefaultDevicePluginImage}}"
-	defaultDriversImageTemplate    = "image-registry.openshift-image-registry.svc:5000/$MOD_NAMESPACE/{{.Vendor}}_gpu_kmm_modules:%s-$KERNEL_VERSION"
-	defaultDriversVersion          = "{{.DefaultDriverVersion}}"
+	gpuDriverModuleName            = "{{.KMM.KernelModuleName}}"
+	imageFirmwarePath              = "{{.KMM.ImageFirmwarePath}}"
+	defaultDevicePluginImage       = "{{.KMM.DevicePluginImage}}"
+	defaultDriversImageTemplate    = "image-registry.openshift-image-registry.svc:5000/$MOD_NAMESPACE/{{.API.Vendor}}_gpu_kmm_modules:%s-$KERNEL_VERSION"
+	defaultDriversVersion          = "{{.KMM.DriverVersion}}"
 )
 
 var (
@@ -47,8 +47,8 @@ var (
 
 //go:generate mockgen -source=kmmmodule.go -package=kmmmodule -destination=mock_kmmmodule.go KMMModuleAPI
 type KMMModuleAPI interface {
-	SetBuildConfigMapAsDesired(buildCM *v1.ConfigMap, devConfig *{{.Vendor}}{{.APIVersion}}.DeviceConfig) error
-	SetKMMModuleAsDesired(mod *kmmv1beta1.Module, devConfig *{{.Vendor}}{{.APIVersion}}.DeviceConfig) error
+	SetBuildConfigMapAsDesired(buildCM *v1.ConfigMap, devConfig *{{.API.Vendor}}{{.API.Version}}.DeviceConfig) error
+	SetKMMModuleAsDesired(mod *kmmv1beta1.Module, devConfig *{{.API.Vendor}}{{.API.Version}}.DeviceConfig) error
 }
 
 type kmmModule struct {
@@ -63,7 +63,7 @@ func NewKMMModule(client client.Client, scheme *runtime.Scheme) KMMModuleAPI {
 	}
 }
 
-func (km *kmmModule) SetBuildConfigMapAsDesired(buildCM *v1.ConfigMap, devConfig *{{.Vendor}}{{.APIVersion}}.DeviceConfig) error {
+func (km *kmmModule) SetBuildConfigMapAsDesired(buildCM *v1.ConfigMap, devConfig *{{.API.Vendor}}{{.API.Version}}.DeviceConfig) error {
 	if buildCM.Data == nil {
 		buildCM.Data = make(map[string]string)
 	}
@@ -72,7 +72,7 @@ func (km *kmmModule) SetBuildConfigMapAsDesired(buildCM *v1.ConfigMap, devConfig
 	return controllerutil.SetControllerReference(devConfig, buildCM, km.scheme)
 }
 
-func (km *kmmModule) SetKMMModuleAsDesired(mod *kmmv1beta1.Module, devConfig *{{.Vendor}}{{.APIVersion}}.DeviceConfig) error {
+func (km *kmmModule) SetKMMModuleAsDesired(mod *kmmv1beta1.Module, devConfig *{{.API.Vendor}}{{.API.Version}}.DeviceConfig) error {
 	err := setKMMModuleLoader(mod, devConfig)
 	if err != nil {
 		return fmt.Errorf("failed to set KMM Module: %v", err)
@@ -81,7 +81,7 @@ func (km *kmmModule) SetKMMModuleAsDesired(mod *kmmv1beta1.Module, devConfig *{{
 	return controllerutil.SetControllerReference(devConfig, mod, km.scheme)
 }
 
-func setKMMModuleLoader(mod *kmmv1beta1.Module, devConfig *{{.Vendor}}{{.APIVersion}}.DeviceConfig) error {
+func setKMMModuleLoader(mod *kmmv1beta1.Module, devConfig *{{.API.Vendor}}{{.API.Version}}.DeviceConfig) error {
 	driversVersion := devConfig.Spec.DriversVersion
 	if driversVersion == "" {
 		driversVersion = defaultDriversVersion
@@ -116,20 +116,20 @@ func setKMMModuleLoader(mod *kmmv1beta1.Module, devConfig *{{.Vendor}}{{.APIVers
 			},
 		},
 	}
-	mod.Spec.ModuleLoader.ServiceAccountName = "{{.Vendor}}-gpu-operator-kmm-module-loader"
+	mod.Spec.ModuleLoader.ServiceAccountName = "{{.API.Vendor}}-gpu-operator-kmm-module-loader"
 	mod.Spec.ImageRepoSecret = devConfig.Spec.ImageRepoSecret
 	mod.Spec.Selector = getNodeSelector(devConfig)
 	return nil
 }
 
-func setKMMDevicePlugin(mod *kmmv1beta1.Module, devConfig *{{.Vendor}}{{.APIVersion}}.DeviceConfig) {
+func setKMMDevicePlugin(mod *kmmv1beta1.Module, devConfig *{{.API.Vendor}}{{.API.Version}}.DeviceConfig) {
 	devicePluginImage := devConfig.Spec.DevicePluginImage
 	if devicePluginImage == "" {
 		devicePluginImage = defaultDevicePluginImage
 	}
 	hostPathDirectory := v1.HostPathDirectory
 	mod.Spec.DevicePlugin = &kmmv1beta1.DevicePluginSpec{
-		ServiceAccountName: "{{.Vendor}}-gpu-operator-kmm-device-plugin",
+		ServiceAccountName: "{{.API.Vendor}}-gpu-operator-kmm-device-plugin",
 		Container: kmmv1beta1.DevicePluginContainerSpec{
 			Image: devicePluginImage,
 			VolumeMounts: []v1.VolumeMount{
@@ -153,16 +153,16 @@ func setKMMDevicePlugin(mod *kmmv1beta1.Module, devConfig *{{.Vendor}}{{.APIVers
 	}
 }
 
-func getDockerfileCMName(devConfig *{{.Vendor}}{{.APIVersion}}.DeviceConfig) string {
+func getDockerfileCMName(devConfig *{{.API.Vendor}}{{.API.Version}}.DeviceConfig) string {
 	return "dockerfile-" + devConfig.Name
 }
 
-func getNodeSelector(devConfig *{{.Vendor}}{{.APIVersion}}.DeviceConfig) map[string]string {
+func getNodeSelector(devConfig *{{.API.Vendor}}{{.API.Version}}.DeviceConfig) map[string]string {
 	if devConfig.Spec.Selector != nil {
 		return devConfig.Spec.Selector
 	}
 
 	ns := make(map[string]string, 0)
-	ns[fmt.Sprintf("feature.node.kubernetes.io/pci-%s.present", {{.Vendor}}{{.APIVersion}}.PCIVendorID)] = "true"
+	ns[fmt.Sprintf("feature.node.kubernetes.io/pci-%s.present", {{.API.Vendor}}{{.API.Version}}.PCIVendorID)] = "true"
 	return ns
 }

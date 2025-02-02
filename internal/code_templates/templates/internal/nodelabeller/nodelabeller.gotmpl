@@ -20,7 +20,7 @@ import (
 	"fmt"
 
 	"github.com/rh-ecosystem-edge/kernel-module-management/pkg/labels"
-	{{.Vendor}}{{.APIVersion}} "{{.CodeRepo}}/api/{{.APIVersion}}"
+	{{.API.Vendor}}{{.API.Version}} "{{.API.CodeRepo}}/api/{{.API.Version}}"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -31,7 +31,7 @@ import (
 
 //go:generate mockgen -source=nodelabeller.go -package=nodelabeller -destination=mock_nodelabeller.go NodeLabeller
 type NodeLabeller interface {
-	SetNodeLabellerAsDesired(ds *appsv1.DaemonSet, devConfig *{{.Vendor}}{{.APIVersion}}.DeviceConfig) error
+	SetNodeLabellerAsDesired(ds *appsv1.DaemonSet, devConfig *{{.API.Vendor}}{{.API.Version}}.DeviceConfig) error
 }
 
 type nodeLabeller struct {
@@ -44,7 +44,7 @@ func NewNodeLabeller(scheme *runtime.Scheme) NodeLabeller {
 	}
 }
 
-func (nl *nodeLabeller) SetNodeLabellerAsDesired(ds *appsv1.DaemonSet, devConfig *{{.Vendor}}{{.APIVersion}}.DeviceConfig) error {
+func (nl *nodeLabeller) SetNodeLabellerAsDesired(ds *appsv1.DaemonSet, devConfig *{{.API.Vendor}}{{.API.Version}}.DeviceConfig) error {
 	if ds == nil {
 		return fmt.Errorf("daemon set is not initialized, zero pointer")
 	}
@@ -94,7 +94,7 @@ func (nl *nodeLabeller) SetNodeLabellerAsDesired(ds *appsv1.DaemonSet, devConfig
 				Containers: []v1.Container{
 					{
 						Name:            "node-labeller-container",
-						Image:           "{{.DefaultNodeLabellerImage}}",
+						Image:           "{{.NodeLabeller.Image}}",
 						ImagePullPolicy: v1.PullAlways,
 						SecurityContext: &v1.SecurityContext{Privileged: pointer.Bool(true)},
 						VolumeMounts:    containerVolumeMounts,
@@ -102,7 +102,7 @@ func (nl *nodeLabeller) SetNodeLabellerAsDesired(ds *appsv1.DaemonSet, devConfig
 				},
 				PriorityClassName:  "system-node-critical",
 				NodeSelector:       nodeSelector,
-				ServiceAccountName: "{{.Vendor}}-gpu-operator-node-labeller",
+				ServiceAccountName: "{{.API.Vendor}}-gpu-operator-node-labeller",
 				Volumes:            volumes,
 			},
 		},

@@ -7,19 +7,19 @@ spec:
   moduleLoader:
     container:
       modprobe:
-        moduleName: {{.KernelModuleName}}
-        firmwarePath: {{.ImageFirmwarePath}}
+        moduleName: {{.KMM.KernelModuleName}}
+        firmwarePath: {{.KMM.ImageFirmwarePath}}
       kernelMappings:
         - regexp: "^.+$"
           containerImage: driversImage
           inTreeModulesToRemove:
-          - {{.KernelModuleName}}
+          - {{.KMM.KernelModuleName}}
           build:
             buildArgs:
               - name: DRIVERS_VERSION
                 value: driversVersion
             dockerfileConfigMap:
               name: dockerfile
-    serviceAccountName: "{{.Vendor}}-gpu-operator-kmm-module-loader"
+    serviceAccountName: "{{.API.Vendor}}-gpu-operator-kmm-module-loader"
   selector:
-    feature.node.kubernetes.io/pci-{{.PCIVendorID}}.present: "true"
+    feature.node.kubernetes.io/pci-{{.KMM.PCIVendorID}}.present: "true"

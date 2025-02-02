@@ -71,6 +71,6 @@ func getTargetPath(sourcePath string, values *config.TemplaterConfig) string {
 		return strings.Replace(trimmedSourcePath, "skipper-repo", values.RepoName, 1) + "-build"
 	} 
 	// replace API_VERSION with the real api version
-	versionedSourcePath := strings.Replace(trimmedSourcePath, apiVersionDir, values.APIVersion, 1)
+	versionedSourcePath := strings.Replace(trimmedSourcePath, apiVersionDir, values.API.Version, 1)
 	return strings.Replace(versionedSourcePath, "gotmpl", "go", 1)
 }

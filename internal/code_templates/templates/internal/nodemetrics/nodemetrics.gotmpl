@@ -20,7 +20,7 @@ import (
 	"fmt"
 
 	"github.com/rh-ecosystem-edge/kernel-module-management/pkg/labels"
-	{{.Vendor}}{{.APIVersion}} "{{.CodeRepo}}/api/{{.APIVersion}}"
+	{{.API.Vendor}}{{.API.Version}} "{{.API.CodeRepo}}/api/{{.API.Version}}"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -32,13 +32,13 @@ import (
 const (
 	metricsPortName       = "node-metrics"
 	metricsPort           = 9110
-	metricsServiceAccount = "{{.Vendor}}-gpu-operator-node-metrics"
-	metricsImage          = "{{.NodeMetricsImage}}"
+	metricsServiceAccount = "{{.API.Vendor}}-gpu-operator-node-metrics"
+	metricsImage          = "{{.NodeMetrics.Image}}"
 )
 
 //go:generate mockgen -source=nodemetrics.go -package=nodemetrics -destination=mock_nodemetrics.go NodeMetrics
 type NodeMetrics interface {
-	SetNodeMetricsAsDesired(ds *appsv1.DaemonSet, devConfig *{{.Vendor}}{{.APIVersion}}.DeviceConfig) error
+	SetNodeMetricsAsDesired(ds *appsv1.DaemonSet, devConfig *{{.API.Vendor}}{{.API.Version}}.DeviceConfig) error
 }
 
 type nodeMetrics struct {
@@ -51,7 +51,7 @@ func NewNodeMetrcis(scheme *runtime.Scheme) NodeMetrics {
 	}
 }
 
-func (nm *nodeMetrics) SetNodeMetricsAsDesired(ds *appsv1.DaemonSet, devConfig *{{.Vendor}}{{.APIVersion}}.DeviceConfig) error {
+func (nm *nodeMetrics) SetNodeMetricsAsDesired(ds *appsv1.DaemonSet, devConfig *{{.API.Vendor}}{{.API.Version}}.DeviceConfig) error {
 	if ds == nil {
 		return fmt.Errorf("daemon set is not initialized, zero pointer")
 	}
@@ -60,10 +60,10 @@ func (nm *nodeMetrics) SetNodeMetricsAsDesired(ds *appsv1.DaemonSet, devConfig *
 	ports := getPorts()
 
 	matchLabels := map[string]string{
-		"app.kubernetes.io/component": "{{.Vendor}}-gpu",
-		"app.kubernetes.io/name":      "{{.Vendor}}-gpu",
-		"app.kubernetes.io/part-of":   "{{.Vendor}}-gpu",
-		"app.kubernetes.io/role":      "{{.Vendor}}-gpu-metrics",
+		"app.kubernetes.io/component": "{{.API.Vendor}}-gpu",
+		"app.kubernetes.io/name":      "{{.API.Vendor}}-gpu",
+		"app.kubernetes.io/part-of":   "{{.API.Vendor}}-gpu",
+		"app.kubernetes.io/role":      "{{.API.Vendor}}-gpu-metrics",
 	}
 	nodeSelector := map[string]string{labels.GetKernelModuleReadyNodeLabel(devConfig.Namespace, devConfig.Name): ""}
 	ds.Spec = appsv1.DaemonSetSpec{

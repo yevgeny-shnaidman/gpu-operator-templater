@@ -26,12 +26,10 @@ func InitializeRepo(config *config.TemplaterConfig) error {
 	if err != nil {
 		return fmt.Errorf("failed to run runInit: %v", err)
 	}
-
 	err = runCreateAPI(sdkPath, config)
 	if err != nil {
 		return fmt.Errorf("failed to run runCreateAPI: %v", err)
 	}
-
 	return cleanup()
 }
 
@@ -39,8 +37,8 @@ func runInit(operatorSDKPath string, config *config.TemplaterConfig) error {
 	// initialize the repo
 	params := []string{
 		"init",
-		"--domain=" + config.Domain,
-		"--repo=" + config.CodeRepo,
+		"--domain=" + config.API.Domain,
+		"--repo=" + config.API.CodeRepo,
 		"--skip-go-version-check",
 	}
 	cmd := exec.Command(operatorSDKPath, params...)
@@ -56,10 +54,10 @@ func runCreateAPI(operatorSDKPath string, config *config.TemplaterConfig) error 
 		"create",
 		"api",
 		"--controller=false",
-		"--group=" + config.Group,
+		"--group=" + config.API.Group,
 		"--kind=DeviceConfig",
 		"--resource=true",
-		"--version=" + config.APIVersion,
+		"--version=" + config.API.Version,
 	}
 	cmd := exec.Command(operatorSDKPath, params...)
 	output, err := cmd.CombinedOutput()

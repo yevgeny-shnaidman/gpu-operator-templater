@@ -23,7 +23,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	kmmv1beta1 "github.com/rh-ecosystem-edge/kernel-module-management/api/v1beta1"
-        {{.Vendor}}{{.APIVersion}} "{{.CodeRepo}}/api/{{.APIVersion}}"
+        {{.API.Vendor}}{{.API.Version}} "{{.API.CodeRepo}}/api/{{.API.Version}}"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
@@ -41,7 +41,7 @@ var _ = Describe("setKMMModuleLoader", func() {
 				APIVersion: "kmm.sigs.x-k8s.io/v1beta1",
 			},
 		}
-		input := {{.Vendor}}{{.APIVersion}}.DeviceConfig{}
+		input := {{.API.Vendor}}{{.API.Version}}.DeviceConfig{}
 
 		expectedYAMLFile, err := os.ReadFile("testdata/module_loader_test.yaml")
 		Expect(err).To(BeNil())
@@ -57,7 +57,7 @@ var _ = Describe("setKMMModuleLoader", func() {
 		expectedMod.Spec.ModuleLoader.Container.KernelMappings[0].ContainerImage = fmt.Sprintf(defaultDriversImageTemplate, defaultDriversVersion)
 		expectedMod.Spec.ModuleLoader.Container.KernelMappings[0].Build.DockerfileConfigMap.Name = "dockerfile-" + input.Name
 		expectedMod.Spec.ModuleLoader.Container.KernelMappings[0].Build.BuildArgs[0].Value = defaultDriversVersion
-		expectedMod.Spec.Selector = map[string]string{"feature.node.kubernetes.io/pci-{{.PCIVendorID}}.present": "true"}
+		expectedMod.Spec.Selector = map[string]string{"feature.node.kubernetes.io/pci-{{.KMM.PCIVendorID}}.present": "true"}
 
 		err = setKMMModuleLoader(&mod, &input)
 
@@ -76,8 +76,8 @@ var _ = Describe("setKMMModuleLoader", func() {
 				APIVersion: "kmm.sigs.x-k8s.io/v1beta1",
 			},
 		}
-		input := {{.Vendor}}{{.APIVersion}}.DeviceConfig{
-			Spec: {{.Vendor}}{{.APIVersion}}.DeviceConfigSpec{
+		input := {{.API.Vendor}}{{.API.Version}}.DeviceConfig{
+			Spec: {{.API.Vendor}}{{.API.Version}}.DeviceConfigSpec{
 				UseInTreeDrivers: false,
 				DriversImage:     "some driver image",
 				DriversVersion:   "some driver version",
@@ -123,7 +123,7 @@ var _ = Describe("setKMMDevicePlugin", func() {
 			},
 		}
 
-		input := {{.Vendor}}{{.APIVersion}}.DeviceConfig{}
+		input := {{.API.Vendor}}{{.API.Version}}.DeviceConfig{}
 
 		expectedYAMLFile, err := os.ReadFile("testdata/device_plugin_test.yaml")
 		Expect(err).To(BeNil())
@@ -150,8 +150,8 @@ var _ = Describe("setKMMDevicePlugin", func() {
 			},
 		}
 
-		input := {{.Vendor}}{{.APIVersion}}.DeviceConfig{
-			Spec: {{.Vendor}}{{.APIVersion}}.DeviceConfigSpec{
+		input := {{.API.Vendor}}{{.API.Version}}.DeviceConfig{
+			Spec: {{.API.Vendor}}{{.API.Version}}.DeviceConfigSpec{
 				DevicePluginImage: "some device plugin image",
 			},
 		}

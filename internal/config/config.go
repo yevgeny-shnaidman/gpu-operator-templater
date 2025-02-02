@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 )
 
+/*
 type TemplaterConfig struct {
         Vendor                   string `yaml:"vendor"`
         CodeRepo                 string `yaml:"codeRepo"`
@@ -24,6 +25,38 @@ type TemplaterConfig struct {
 	RepoName                 string
 
 }
+*/
+
+type TemplaterConfig struct {
+	API struct {
+		Vendor                   string `yaml:"vendor"`
+		CodeRepo                 string `yaml:"codeRepo"`
+		Version               string `yaml:"version"`
+		Domain                   string `yaml:"domain"`
+		Group                    string `yaml:"apiGroup"`
+
+	} `yaml:"api"`
+	KMM struct {
+		PCIVendorID              string `yaml:"pciVendorID"`
+		KernelModuleName         string `yaml:"kernelModuleName"`
+		EnableDevicePlugin       bool `yaml:"enableDevicePlugin"`
+		DevicePluginImage string `yaml:"devicePluginImage"`
+		EnableFirmware           bool `yaml:"enableFirmware"`
+		ImageFirmwarePath        string `yaml:"imageFirmwarePath"`
+		DriverVersion     string `yaml:"driverVersion"`
+	} `yaml:"kmm"`
+	NodeLabeller struct {
+		Enable  bool `yaml:"enable"`
+		Image string `yaml:"image"`
+	} `yaml:"nodeLabeller"`
+	NodeMetrics struct {
+		Enable  bool `yaml:"enable"`
+		Image string `yaml:"image"`
+	} `yaml:"nodeMetrics"`
+	
+	OperatorImage            string `yaml:"operatorImage"`
+	RepoName                 string
+}
 
 func InitConfigData(configFilePath string) (*TemplaterConfig, error) {
 	var configData TemplaterConfig
@@ -37,7 +70,7 @@ func InitConfigData(configFilePath string) (*TemplaterConfig, error) {
                 return nil, fmt.Errorf("failed to unmarshal the values file %s into struct: error %v", configFilePath, err)
         }
 
-	configData.RepoName = filepath.Base(configData.CodeRepo)
+	configData.RepoName = filepath.Base(configData.API.CodeRepo)
 
 	return &configData, nil
 }

@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package {{.APIVersion}}
+package {{.API.Version}}
 
 import (
 	v1 "k8s.io/api/core/v1"
@@ -22,7 +22,7 @@ import (
 )
 
 const (
-	PCIVendorID = "{{.PCIVendorID}}"
+	PCIVendorID = "{{.KMM.PCIVendorID}}"
 )
 
 // DeviceConfigSpec describes how the AMD GPU operator should enable AMD GPU device for customer's use.
@@ -71,10 +71,10 @@ type DeviceConfigStatus struct {
 }
 
 //+kubebuilder:object:root=true
-//+kubebuilder:resource:scope=Namespaced,shortName={{.Vendor}}dc
+//+kubebuilder:resource:scope=Namespaced,shortName={{.API.Vendor}}dc
 //+kubebuilder:subresource:status
 
-// DeviceConfig describes how to enable {{.Vendor}} GPU device
+// DeviceConfig describes how to enable {{.API.Vendor}} GPU device
 // +operator-sdk:csv:customresourcedefinitions:displayName="DeviceConfig"
 type DeviceConfig struct {
 	metav1.TypeMeta   `json:",inline"`

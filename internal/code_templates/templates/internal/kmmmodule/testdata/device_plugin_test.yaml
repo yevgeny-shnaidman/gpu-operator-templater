@@ -5,9 +5,9 @@ metadata:
   namespace: moduleNamespace
 spec:
   devicePlugin:
-    serviceAccountName: "{{.Vendor}}-gpu-operator-kmm-device-plugin"
+    serviceAccountName: "{{.API.Vendor}}-gpu-operator-kmm-device-plugin"
     container:
-      image: rocm/k8s-device-plugin
+      image: "{{.KMM.DevicePluginImage}}"
       volumeMounts:
       - name: sys
         mountPath: /sys

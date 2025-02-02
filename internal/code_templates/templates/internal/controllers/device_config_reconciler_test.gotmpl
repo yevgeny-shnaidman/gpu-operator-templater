@@ -23,11 +23,11 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	kmmv1beta1 "github.com/rh-ecosystem-edge/kernel-module-management/api/v1beta1"
-	{{.Vendor}}{{.APIVersion}} "{{.CodeRepo}}/api/{{.APIVersion}}"
-	mock_client "{{.CodeRepo}}/internal/client"
-	"{{.CodeRepo}}/internal/kmmmodule"
-	"{{.CodeRepo}}/internal/nodelabeller"
-	"{{.CodeRepo}}/internal/nodemetrics"
+	{{.API.Vendor}}{{.API.Version}} "{{.API.CodeRepo}}/api/{{.API.Version}}"
+	mock_client "{{.API.CodeRepo}}/internal/client"
+	"{{.API.CodeRepo}}/internal/kmmmodule"
+	"{{.API.CodeRepo}}/internal/nodelabeller"
+	"{{.API.CodeRepo}}/internal/nodemetrics"
 	"go.uber.org/mock/gomock"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
@@ -72,7 +72,7 @@ var _ = Describe("Reconcile", func() {
 		handleKMMModuleError,
 		handleNodeLabellerError,
 		handleMetricsError bool) {
-		devConfig := &{{.Vendor}}{{.APIVersion}}.DeviceConfig{}
+		devConfig := &{{.API.Vendor}}{{.API.Version}}.DeviceConfig{}
 		if getDeviceError {
 			mockHelper.EXPECT().getRequestedDeviceConfig(ctx, nn).Return(nil, fmt.Errorf("some error"))
 			goto executeTestFunction
@@ -124,7 +124,7 @@ var _ = Describe("Reconcile", func() {
 	)
 
 	It("device config finalization", func() {
-		devConfig := &{{.Vendor}}{{.APIVersion}}.DeviceConfig{}
+		devConfig := &{{.API.Vendor}}{{.API.Version}}.DeviceConfig{}
 		devConfig.SetDeletionTimestamp(&metav1.Time{})
 
 		mockHelper.EXPECT().getRequestedDeviceConfig(ctx, req.NamespacedName).Return(devConfig, nil)
@@ -163,14 +163,14 @@ var _ = Describe("getLabelsPerModules", func() {
 	}
 
 	It("good flow", func() {
-		expectedDevConfig := {{.Vendor}}{{.APIVersion}}.DeviceConfig{
+		expectedDevConfig := {{.API.Vendor}}{{.API.Version}}.DeviceConfig{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      nn.Name,
 				Namespace: nn.Namespace,
 			},
 		}
 		kubeClient.EXPECT().Get(ctx, nn, gomock.Any()).Do(
-			func(_ interface{}, _ interface{}, devConfig *{{.Vendor}}{{.APIVersion}}.DeviceConfig, _ ...client.GetOption) {
+			func(_ interface{}, _ interface{}, devConfig *{{.API.Vendor}}{{.API.Version}}.DeviceConfig, _ ...client.GetOption) {
 				devConfig.Name = nn.Name
 				devConfig.Namespace = nn.Namespace
 			},
@@ -204,7 +204,7 @@ var _ = Describe("setFinalizer", func() {
 	ctx := context.Background()
 
 	It("good flow", func() {
-		devConfig := &{{.Vendor}}{{.APIVersion}}.DeviceConfig{}
+		devConfig := &{{.API.Vendor}}{{.API.Version}}.DeviceConfig{}
 
 		kubeClient.EXPECT().Patch(ctx, gomock.Any(), gomock.Any()).Return(nil)
 
@@ -216,7 +216,7 @@ var _ = Describe("setFinalizer", func() {
 	})
 
 	It("error flow", func() {
-		devConfig := &{{.Vendor}}{{.APIVersion}}.DeviceConfig{}
+		devConfig := &{{.API.Vendor}}{{.API.Version}}.DeviceConfig{}
 
 		kubeClient.EXPECT().Patch(ctx, gomock.Any(), gomock.Any()).Return(fmt.Errorf("some error"))
 
@@ -238,7 +238,7 @@ var _ = Describe("finalizeDeviceConfig", func() {
 	})
 
 	ctx := context.Background()
-	devConfig := &{{.Vendor}}{{.APIVersion}}.DeviceConfig{
+	devConfig := &{{.API.Vendor}}{{.API.Version}}.DeviceConfig{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      devConfigName,
 			Namespace: devConfigNamespace,
@@ -369,7 +369,7 @@ var _ = Describe("handleKMMModule", func() {
 	})
 
 	ctx := context.Background()
-	devConfig := &{{.Vendor}}{{.APIVersion}}.DeviceConfig{
+	devConfig := &{{.API.Vendor}}{{.API.Version}}.DeviceConfig{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      devConfigName,
 			Namespace: devConfigNamespace,
@@ -430,7 +430,7 @@ var _ = Describe("handleBuildConfigMap", func() {
 	})
 
 	ctx := context.Background()
-	devConfig := &{{.Vendor}}{{.APIVersion}}.DeviceConfig{
+	devConfig := &{{.API.Vendor}}{{.API.Version}}.DeviceConfig{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      devConfigName,
 			Namespace: devConfigNamespace,
@@ -491,7 +491,7 @@ var _ = Describe("handleNodeLabeller", func() {
 	})
 
 	ctx := context.Background()
-	devConfig := &{{.Vendor}}{{.APIVersion}}.DeviceConfig{
+	devConfig := &{{.API.Vendor}}{{.API.Version}}.DeviceConfig{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      devConfigName,
 			Namespace: devConfigNamespace,
@@ -548,7 +548,7 @@ var _ = Describe("handleNodeMetrics", func() {
 	})
 
 	ctx := context.Background()
-	devConfig := &{{.Vendor}}{{.APIVersion}}.DeviceConfig{
+	devConfig := &{{.API.Vendor}}{{.API.Version}}.DeviceConfig{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      devConfigName,
 			Namespace: devConfigNamespace,
