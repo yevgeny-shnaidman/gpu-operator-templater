@@ -10,29 +10,57 @@ This module is configured to load the GPU kernel module. Currently the created c
 ### Node Labeller 
 Node labeller is an image that is running on every node that the kernel module is deployed on. It is supposed to label the nodes with the user's specified labels. The image for node labeller is provided by the user
 
-### Node mertrics
+### Node metrics
 Node metrix deployes a user's metrix pods on the kernel module's nodes. In the feature we should probably provide additional rules and port mappings in order for it actually to work
 
-## Creating operator code
-Follow the follwing steps to create the GPU operator code:
+## Running templater
+There are 2 steps that needs to be execcuted in order to create the initial code: creating the code and adjusting the go.mod
+
+### Creating the code
 1. Create a github repo and clone it into your server. Note: the cloned repo must be empty
 2. Create templater executable and prepare the configuration file (see sections "Templater executable" and "Templater configuration")
 3. Switch into the cloned directory
 4. Run the templater with configuration file: <templater path> -f <configuration file path>
-5. Run: go mod tidy - this will prepare the go.mod and go.sum files
-6. Run: make manifest - this will prepare the CRDs yamls, rbac and everything needed for deployment in the config directory
-7. Run: make generate - this will generate the mocks for unit test
+
+### Adjusting go.mod
+Adjusting the go.mod needs to be manually, since there are a lot of variables that the go.mod is dependent upon: Golang version, KMM version etc'
+1. Run: go mod tidy - this will prepare the go.mod and go.sum files. If needed adjust the go.mod accordingly
+2. Run: make manifest - this will prepare the CRDs yamls, rbac and everything needed for deployment in the config directory
+3. Run: make generate - this will generate the mocks for unit test
 
 ## Templater configuration
-1. vendor - string that represent the vendor name. For example: test, nvidia, amd, intel, ibm, etc'
+Templater configuration is supplied to the templater as an input during templater execution. 
+It allows to configure the various components of the operator code and environment.
+The configuration file is an YML file that is divided into 4 subcomponents:
+API - contains configuration needed for CRD definitions and initialiation of the operator-sdk
+KMM - contains confgiuration used by KMM Module
+NodeLabeller - contains confgiuration used by NodeLabeller component (optional)
+NodeMetrics - contains confgiuration used by NodeMetrics component (optional)
+
+### API component
+1. vendor - string that represent the vendor name. For example: test, nvidia, amd, intel, ibm, etc'. Used for configuring labels and imports re-naming
 2. codeRepo - github repository that is used for the operator code: For example: github.com/yevgeny-shnaidman/test-gpu-operator
-3. apiVersion - the version of the CRD API that the gpu operator will be using: For example: v1alpha1, v1beta1...
-4. group - the group part of the CRD api
-5. domain - the domain part of CRD api
-6. pciVendorID - the PCI vendor id of the GPU device. Will be used as a part of the node selector field of the KMM Module, to schedule worker pod and device plugin pods only on the nodes containing that HW
-7. kernelModuleName -  the name of the kernel module to load, as it would be passed to modprobe command
-8. defaultDevicePluginImage - the image to be used for the DevicePlugin pods
-9. imageFirmwarePath - the path of the firmware directory inside the kernel module image. Will be used by KMM Module
-10. defaultDriverVersion - the default version of the GPU driver to be used. Will be used a a tag to the module container image created by KMM during in-cluster build
-11. defaultNodeLabellerImage - the image that will be used in the NodeLabeller daemonset
-12. operatorImage - the operator image that will be created by the Makefile command
+3. version - the API version of the CRD API that the gpu operator will be using: For example: v1alpha1, v1beta1...
+4. group - the group part of the CRD api. For example: compgpu
+5. domain - the domain part of CRD api. For example: sigs.x-k8s.io
+
+### KMM Component
+1. pciVendorID - the PCI vendor id of the GPU device. Will be used as a part of the node selector field of the KMM Module, to schedule worker pod and device plugin pods only on the nodes containing that HW
+2. kernelModuleName -  the name of the kernel module to load, as it would be passed to modprobe command
+3. enableDevicePlugin - should be set to true, if the device plugin part of KMM should be used
+4. devicePluginImage - the image to be used for the DevicePlugin pods.Applicable only if enableDevicePlugin is true
+5. enableFirmware - should be set to true, if the kernel module requires the firmware configuration
+6. imageFirmwarePath - the path of the firmware directory inside the kernel module image. Applicable only if  imageFirmwarePath is true 
+7. driverVersion - the default version of the GPU driver to be used. Will be used a a tag to the module container image created by KMM during in-cluster build
+
+### NodeLabeller component
+1. enable - should be set to true, if operator needs to deploy node labeller component.
+2. image - the image of the node labeller, that will be deployed by a dedicated DaemonSet
+
+## NodeMetrics
+1. enable - should be set to true, if operator needs to deploy node metrics component.
+2. image - the image of the node metrics, that will be deployed by a dedicated DaemonSet
+
+### Templater executable
+Currently templater executable needs to be built by the user. The following will build the executable
+make templater

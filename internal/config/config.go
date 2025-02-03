@@ -7,26 +7,6 @@ import (
 	"path/filepath"
 )
 
-/*
-type TemplaterConfig struct {
-        Vendor                   string `yaml:"vendor"`
-        CodeRepo                 string `yaml:"codeRepo"`
-        APIVersion               string `yaml:"apiVersion"`
-	Domain                   string `yaml:"domain"`
-        Group                    string `yaml:"group"`
-        PCIVendorID              string `yaml:"pciVendorID"`
-        KernelModuleName         string `yaml:"kernelModuleName"`
-        DefaultDevicePluginImage string `yaml:"defaultDevicePluginImage"`
-        ImageFirmwarePath        string `yaml:"imageFirmwarePath"`
-        DefaultDriverVersion     string `yaml:"defaultDriverVersion"`
-        DefaultNodeLabellerImage string `yaml:"defaultNodeLabellerImage"`
-        NodeMetricsImage         string `yaml:"nodeMetricsImage"`
-	OperatorImage            string `yaml:"operatorImage"`
-	RepoName                 string
-
-}
-*/
-
 type TemplaterConfig struct {
 	API struct {
 		Vendor                   string `yaml:"vendor"`
