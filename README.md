@@ -1,66 +1,173 @@
-# GPU operator templater
+# GPU Operator Templater
 
-GPU operator templater allows creating code template that implements a GPU operator code for a specific vendor/device. The created code base will require additional updates for the code, but they should be minimal. For a generic GPU operator the created code base should provide the immidiate ability to compile, create image and run on a OCP cluster
+GPU Operator Templater scaffolds a ready-to-build Kubernetes Operator that enables GPU devices for a specific vendor/device. It bootstraps an Operator repo using Operator SDK and renders a vendor-specific codebase that integrates with Kernel Module Management (KMM), with optional Node Labeller and Node Metrics components. The generated repo should require only minimal code changes before you can build an image and deploy on an OpenShift (OCP) or Kubernetes cluster.
 
-## Code components
+## What it generates
+- KMM-based module management to load a GPU kernel module and optionally deploy a device plugin
+- A `DeviceConfig` CRD and API for configuring driver and device-plugin deployment
+- Optional Node Labeller DaemonSet (labels GPU nodes)
+- Optional Node Metrics DaemonSet (deploys user-provided metrics pods)
+- Makefile targets to build, generate manifests, and deploy the Operator
 
-### KMM module
-This module is configured to load the GPU kernel module. Currently the created code provides the ability to load pre-compiled kernel module and to deploy the predefined device-plugin image. In case additional functionlity needs to be supported (in-cluster builds, in-cluster signing, multiple kernel modules loading) the code in internal/kmmmodule/kmmmodule.go needs to be updated
+## How it works
+1. Uses an embedded `operator-sdk` to `init` a new repo and `create api` for `DeviceConfig`.
+2. Renders templates into the target repo (adjusted for your vendor, API group/version, etc.).
+3. Applies small `go.mod` adjustments automatically. You may still need to run `go mod tidy`.
 
-### Node Labeller 
-Node labeller is an image that is running on every node that the kernel module is deployed on. It is supposed to label the nodes with the user's specified labels. The image for node labeller is provided by the user
+## Prerequisites
+- Linux amd64 environment
+- Go 1.21+ installed for local builds
+- Docker or compatible container runtime (for building images)
+- Git and curl
+- Access to a Kubernetes/OCP cluster for deployment (optional until you deploy)
 
-### Node metrics
-Node metrix deployes a user's metrix pods on the kernel module's nodes. In the feature we should probably provide additional rules and port mappings in order for it actually to work
-
-## Running templater
-There are 2 steps that needs to be execcuted in order to create the initial code: creating the code and adjusting the go.mod
-
-### Creating the code
-1. Create a github repo and clone it into your server. Note: the cloned repo must be empty
-2. Create templater executable and prepare the configuration file (see sections "Templater executable" and "Templater configuration")
-3. Switch into the cloned directory
-4. Run the templater with configuration file: <templater path> -f <configuration file path>
-
-### Adjusting go.mod
-Adjusting the go.mod needs to be manually, since there are a lot of variables that the go.mod is dependent upon: Golang version, KMM version etc'
-1. Run: go mod tidy - this will prepare the go.mod and go.sum files. If needed adjust the go.mod accordingly
-2. Run: make manifest - this will prepare the CRDs yamls, rbac and everything needed for deployment in the config directory
-3. Run: make generate - this will generate the mocks for unit test
-
-## Templater configuration
-Templater configuration is supplied to the templater as an input during templater execution. 
-It allows to configure the various components of the operator code and environment.
-The configuration file is an YML file that is divided into 4 subcomponents:
-API - contains configuration needed for CRD definitions and initialiation of the operator-sdk
-KMM - contains confgiuration used by KMM Module
-NodeLabeller - contains confgiuration used by NodeLabeller component (optional)
-NodeMetrics - contains confgiuration used by NodeMetrics component (optional)
-
-### API component
-1. vendor - string that represent the vendor name. For example: test, nvidia, amd, intel, ibm, etc'. Used for configuring labels and imports re-naming
-2. codeRepo - github repository that is used for the operator code: For example: github.com/yevgeny-shnaidman/test-gpu-operator
-3. version - the API version of the CRD API that the gpu operator will be using: For example: v1alpha1, v1beta1...
-4. group - the group part of the CRD api. For example: compgpu
-5. domain - the domain part of CRD api. For example: sigs.x-k8s.io
-
-### KMM Component
-1. pciVendorID - the PCI vendor id of the GPU device. Will be used as a part of the node selector field of the KMM Module, to schedule worker pod and device plugin pods only on the nodes containing that HW
-2. kernelModuleName -  the name of the kernel module to load, as it would be passed to modprobe command
-3. enableDevicePlugin - should be set to true, if the device plugin part of KMM should be used
-4. devicePluginImage - the image to be used for the DevicePlugin pods.Applicable only if enableDevicePlugin is true
-5. enableFirmware - should be set to true, if the kernel module requires the firmware configuration
-6. imageFirmwarePath - the path of the firmware directory inside the kernel module image. Applicable only if  imageFirmwarePath is true 
-7. driverVersion - the default version of the GPU driver to be used. Will be used a a tag to the module container image created by KMM during in-cluster build
-
-### NodeLabeller component
-1. enable - should be set to true, if operator needs to deploy node labeller component.
-2. image - the image of the node labeller, that will be deployed by a dedicated DaemonSet
-
-## NodeMetrics
-1. enable - should be set to true, if operator needs to deploy node metrics component.
-2. image - the image of the node metrics, that will be deployed by a dedicated DaemonSet
-
-### Templater executable
-Currently templater executable needs to be built by the user. The following will build the executable
+## Build the templater
+```bash
 make templater
+```
+This builds the `templater` binary in the repo root.
+
+## Quick start
+1. Create an empty GitHub repository for your new Operator and clone it locally. The target directory must be empty.
+2. Prepare a configuration file (see examples in `examples/` and the Configuration reference below).
+3. From inside the empty target repo directory, run the templater:
+   ```bash
+   /path/to/gpu-operator-templater/templater -f /path/to/config.yaml
+   ```
+4. Post-generation steps (run inside your newly generated repo):
+   ```bash
+   go mod tidy
+   make manifests
+   make generate
+   # Optional: run unit tests
+   make unit-test
+   ```
+5. Build and push the Operator image (replace with your repository):
+   ```bash
+   make docker-build IMG=<your-registry/your-operator>:<tag>
+   make docker-push IMG=<your-registry/your-operator>:<tag>
+   ```
+6. Install CRDs and deploy the Operator to your cluster:
+   ```bash
+   make install
+   make deploy IMG=<your-registry/your-operator>:<tag>
+   ```
+7. Create a `DeviceConfig` instance to trigger driver/device-plugin deployment. Example skeleton (adjust to your `group`, `domain`, and `version`):
+   ```yaml
+   apiVersion: <group>.<domain>/<version>
+   kind: DeviceConfig
+   metadata:
+     name: example
+     namespace: <target-namespace>
+   spec:
+     # Optional overrides
+     driversImage: <your-driver-image>
+     driversVersion: <driver-version>
+     devicePluginImage: <device-plugin-image>
+     selector:
+       node-role.kubernetes.io/worker: ""
+   ```
+
+## Configuration reference
+Supply a YAML file via `-f` to the templater. See `examples/` for full samples.
+
+Top-level keys:
+- `api`:
+  - `vendor` (string): Vendor name, lowercase (e.g., `nvidia`, `amd`, `intel`). Used for labels and import aliases.
+  - `codeRepo` (string): Module path to use for the generated repo (e.g., `github.com/your-org/your-gpu-operator`).
+  - `version` (string): API version for the CRD (e.g., `v1alpha1`).
+  - `apiGroup` (string): Group for the API (e.g., `compgpu`).
+  - `domain` (string): Domain for the API (e.g., `sigs.x-k8s.io`).
+- `kmm`:
+  - `pciVendorID` (string): PCI vendor ID used for node selection (targets nodes with that HW).
+  - `kernelModuleName` (string): Name passed to `modprobe` for the GPU kernel module.
+  - `enableDevicePlugin` (bool): Whether to deploy a device plugin via KMM.
+  - `devicePluginImage` (string): Default device plugin image if not specified in the `DeviceConfig`.
+  - `enableFirmware` (bool): Whether firmware files are required by the kernel module.
+  - `imageFirmwarePath` (string): Path to firmware directory inside the driver image.
+  - `driverVersion` (string): Default driver version, used as image tag for in-cluster builds.
+  - `enableInClusterBuild` (bool): Enable KMM in-cluster driver image builds.
+- `nodeLabeller` (optional, omit to disable):
+  - `image` (string): Default image for node labeller DaemonSet.
+- `nodeMetrics` (optional, omit to disable):
+  - `image` (string): Default image for node metrics DaemonSet.
+- `operatorImage` (string): Base image name (without tag) used by the generated Makefile (e.g., `quay.io/you/your-gpu-operator`).
+
+Notes:
+- Optional components are enabled by including their section. Omit `nodeLabeller` or `nodeMetrics` to disable them.
+- The presence of `devicePluginImage` is honored only when `enableDevicePlugin` is true.
+
+## Example configs
+Minimal (KMM only):
+```yaml
+api:
+  vendor: test
+  codeRepo: github.com/yevgeny-shnaidman/test-gpu-operator
+  version: v1alpha1
+  apiGroup: compgpu
+  domain: sigs.x-k8s.io
+kmm:
+  pciVendorID: "2040"
+  kernelModuleName: testgpu
+  devicePluginImage: rocm/k8s-device-plugin
+  imageFirmwarePath: testFirmwareDir/updates
+  driverVersion: el9-6.1.1
+operatorImage: quay.io/yshnaidm/test-gpu-operator
+```
+
+With Node Labeller:
+```yaml
+api:
+  vendor: test
+  codeRepo: github.com/yevgeny-shnaidman/test-gpu-operator
+  version: v1alpha1
+  apiGroup: compgpu
+  domain: sigs.x-k8s.io
+kmm:
+  pciVendorID: "2040"
+  kernelModuleName: testgpu
+  devicePluginImage: rocm/k8s-device-plugin
+  imageFirmwarePath: testFirmwareDir/updates
+  driverVersion: el9-6.1.1
+nodeLabeller:
+  image: rocm/k8s-device-plugin:labeller-latest
+operatorImage: quay.io/yshnaidm/test-gpu-operator
+```
+
+With Node Metrics:
+```yaml
+api:
+  vendor: test
+  codeRepo: github.com/yevgeny-shnaidman/test-gpu-operator
+  version: v1alpha1
+  apiGroup: compgpu
+  domain: sigs.x-k8s.io
+kmm:
+  pciVendorID: "2040"
+  kernelModuleName: testgpu
+  devicePluginImage: rocm/k8s-device-plugin
+  imageFirmwarePath: testFirmwareDir/updates
+  driverVersion: el9-6.1.1
+nodeMetrics:
+  image: rocm/k8s-node-metrics
+operatorImage: quay.io/yshnaidm/test-gpu-operator
+```
+
+You can find these under `examples/` as:
+- `config-kmm-only.yaml`
+- `config-with-kmm-nodelabeller.yaml`
+- `config-with-kmm-nodemetrics.yaml`
+- `config.yaml` (full example)
+
+## After generation: common tasks in the new repo
+- Generate and install manifests: `make manifests && make install`
+- Generate mocks and deep-copies: `make generate`
+- Build/push controller image: `make docker-build IMG=... && make docker-push IMG=...`
+- Deploy the controller: `make deploy IMG=...`
+- Bundle and catalog (optional): `make bundle bundle-build`
+
+## Troubleshooting and tips
+- If `go.mod` contains unexpected versions, run `go mod tidy` and adjust as needed.
+- Ensure your `IMG`/`operatorImage` point to a registry you can push to.
+- `enableInClusterBuild` requires appropriate KMM configuration and build environment in-cluster.
+- This tool scaffolds a baseline. Depending on your hardware and driver packaging, you may need to extend the controller logic or templates in the generated repo.
