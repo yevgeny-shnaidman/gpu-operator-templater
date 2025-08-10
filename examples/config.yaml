@@ -24,4 +24,6 @@ nodeLabeller:
   # node labeller image to be used in case it is not defined in the DeviceConfig
   image:  rocm/k8s-device-plugin:labeller-latest
 # operator image repo
+nodeMetrics:
+  image: rocm/k8s-node-metrics
 operatorImage: quay.io/yshnaidm/test-gpu-operator

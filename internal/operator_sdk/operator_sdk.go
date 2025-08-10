@@ -50,7 +50,7 @@ func runInit(operatorSDKPath string, config *config.TemplaterConfig) error {
 }
 
 func runCreateAPI(operatorSDKPath string, config *config.TemplaterConfig) error {
-	params := []string {
+	params := []string{
 		"create",
 		"api",
 		"--controller=false",
@@ -68,7 +68,17 @@ func runCreateAPI(operatorSDKPath string, config *config.TemplaterConfig) error 
 }
 
 func cleanup() error {
-	return os.Remove("main.go") 
+	if err := os.Remove("cmd/main.go");err != nil {
+		return fmt.Errorf("failed to remove cmd/main.go")
+	}
+	if err := os.Remove(".golangci.yml");err != nil {
+                return fmt.Errorf("failed to remove .golangci.yml")
+        }
+	if err := os.RemoveAll("bin");err != nil {
+		return fmt.Errorf("failed to remove bin directory")
+	}
+
+	return os.RemoveAll("test")
 }
 
 // Hhelper function to read binary file

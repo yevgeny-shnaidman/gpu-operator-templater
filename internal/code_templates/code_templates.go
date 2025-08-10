@@ -41,6 +41,11 @@ func RunTemplates(config *config.TemplaterConfig) error {
 			return err
 		}
 
+		// check if the directories/files should be ignored based on the  config
+		if shouldIgnorePath(path, config) {
+			return nil
+		}
+
 		// get the path in the target
 		targetPath := getTargetPath(path, config)
 		if d.IsDir() {
@@ -54,7 +59,7 @@ func RunTemplates(config *config.TemplaterConfig) error {
 			if err != nil {
 				return fmt.Errorf("failed to parse file %s: %w", path, err)
 			}
-			err = tmpl.ExecuteTemplate(targetFile, filepath.Base(path)/*templateFile*/, *config)
+			err = tmpl.ExecuteTemplate(targetFile, filepath.Base(path) /*templateFile*/, *config)
 			if err != nil {
 				return fmt.Errorf("failed to parse templates for file %s: err %v", path, err)
 			}
@@ -69,8 +74,20 @@ func getTargetPath(sourcePath string, values *config.TemplaterConfig) string {
 	trimmedSourcePath := strings.TrimPrefix(sourcePath, "templates/")
 	if trimmedSourcePath == "Dockerfile.skipper-repo" {
 		return strings.Replace(trimmedSourcePath, "skipper-repo", values.RepoName, 1) + "-build"
-	} 
+	}
 	// replace API_VERSION with the real api version
 	versionedSourcePath := strings.Replace(trimmedSourcePath, apiVersionDir, values.API.Version, 1)
 	return strings.Replace(versionedSourcePath, "gotmpl", "go", 1)
+}
+
+func shouldIgnorePath(path string, values *config.TemplaterConfig) bool {
+    // Define ignore rules
+    if strings.Contains(path, "nodelabeller") && values.NodeLabeller == nil {
+        return true
+    }
+    if strings.Contains(path, "nodemetrics") && values.NodeMetrics == nil {
+        return true
+    }
+
+    return false
 }

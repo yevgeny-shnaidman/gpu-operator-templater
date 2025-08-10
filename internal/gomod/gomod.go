@@ -1,17 +1,50 @@
 package gomod
 
 import (
-	"fmt"
 	"os"
+	"strings"
 )
 
+
+func Update() error {
+	// Read the entire file into memory
+	input, err := os.ReadFile("go.mod")
+	if err != nil {
+		return err
+	}
+
+	lines := strings.Split(string(input), "\n")
+	var outputLines []string
+
+	// Loop through lines, adding only the ones that DON'T contain the search string
+	for _, line := range lines {
+		if strings.Contains(line, "go 1.23.0") {
+			line = "go 1.24.0"
+		}
+		if !strings.Contains(line, "godebug default") {
+			outputLines = append(outputLines, line)
+		}
+	}
+
+	// Join the lines back together and write the file
+	output := strings.Join(outputLines, "\n")
+	err = os.WriteFile("go.mod", []byte(output), 0644)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+/*
 func Update() error {
 	file, err := os.OpenFile("go.mod", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return fmt.Errorf("failed to open go.mod for update: %v", err)
 	}
 	defer file.Close()
-
+*/
+	/*
 	kmmLine := "\nreplace github.com/rh-ecosystem-edge/kernel-module-management => github.com/rh-ecosystem-edge/kernel-module-management release-2.2"
 	_, err = file.WriteString(kmmLine)
 	if err != nil {
@@ -26,15 +59,18 @@ func Update() error {
 
 	ocmLine := "\nreplace open-cluster-management.io/api => open-cluster-management.io/api v0.13.0"
 	_, err = file.WriteString(ocmLine)
-        if err != nil {
-                return fmt.Errorf("failed to append line <%s> to file go.mod: %v", ocmLine, err)
-        }
+	if err != nil {
+		return fmt.Errorf("failed to append line <%s> to file go.mod: %v", ocmLine, err)
+	}
 
 	uberLine := "\nreplace go.uber.org/mock => go.uber.org/mock v0.4.0"
 	_, err = file.WriteString(uberLine)
-        if err != nil {
-                return fmt.Errorf("failed to append line <%s> to file go.mod: %v", uberLine, err)
-        }
-	
+	if err != nil {
+		return fmt.Errorf("failed to append line <%s> to file go.mod: %v", uberLine, err)
+	}
+	*/
+/*
 	return nil
 }
+*/
+

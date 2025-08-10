@@ -3,8 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/yevgeny-shnaidman/gpu-operator-template/internal/config"
 	"github.com/yevgeny-shnaidman/gpu-operator-template/internal/code_templates"
+	"github.com/yevgeny-shnaidman/gpu-operator-template/internal/config"
 	"github.com/yevgeny-shnaidman/gpu-operator-template/internal/gomod"
 	"github.com/yevgeny-shnaidman/gpu-operator-template/internal/operator_sdk"
 	"os"

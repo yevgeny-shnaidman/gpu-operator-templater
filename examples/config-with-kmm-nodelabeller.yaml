@@ -1,0 +1,26 @@
+api:
+  # vendor name in small letters, for example: amd or nmvidia or qualcomm
+  vendor: test
+  # github repository for the operator code
+  codeRepo: github.com/yevgeny-shnaidman/test-gpu-operator
+  # apiversion for the DeviceConfig
+  version: v1alpha1
+  # group scheme for the DeviceConfig
+  group: compgpu
+  # domain for the DeviceConfig
+  domain: sigs.x-k8s.io
+kmm:
+  # pci vendor id of the targeted devices. will be used to target the nodes for kernel module deployment
+  pciVendorID: 2040
+  # the name of the main kernel module to insert. it will be also used to delete in-tree kernel module
+  kernelModuleName: testgpu
+  # default device plugin image: will be used in case not defined in the DeviceConfig
+  devicePluginImage: rocm/k8s-device-plugin 
+  # the path to the firmware inside the container image
+  imageFirmwarePath: testFirmwareDir/updates
+  # default driver version, will be used as a tag the image
+  driverVersion: el9-6.1.1
+nodeLabeller:
+  # node labeller image to be used in case it is not defined in the DeviceConfig
+  image:  rocm/k8s-device-plugin:labeller-latest
+operatorImage: quay.io/yshnaidm/test-gpu-operator

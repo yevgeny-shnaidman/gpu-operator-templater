@@ -92,24 +92,26 @@ func setKMMModuleLoader(mod *kmmv1beta1.Module, devConfig *{{.API.Vendor}}{{.API
 		driversImage = fmt.Sprintf(defaultDriversImageTemplate, driversVersion)
 	}
 
-	mod.Spec.ModuleLoader.Container = kmmv1beta1.ModuleLoaderContainerSpec{
-		Modprobe: kmmv1beta1.ModprobeSpec{
-			ModuleName:   gpuDriverModuleName,
-			FirmwarePath: imageFirmwarePath,
-		},
-		KernelMappings: []kmmv1beta1.KernelMapping{
-			{
-				Regexp:               "^.+$",
-				ContainerImage:       driversImage,
-				InTreeModulesToRemove: []string{gpuDriverModuleName,},
-				Build: &kmmv1beta1.Build{
-					DockerfileConfigMap: &v1.LocalObjectReference{
-						Name: getDockerfileCMName(devConfig),
-					},
-					BuildArgs: []kmmv1beta1.BuildArg{
-						{
-							Name:  "DRIVERS_VERSION",
-							Value: driversVersion,
+	mod.Spec.ModuleLoader = &kmmv1beta1.ModuleLoaderSpec{
+		Container: kmmv1beta1.ModuleLoaderContainerSpec{
+			Modprobe: kmmv1beta1.ModprobeSpec{
+				ModuleName:   gpuDriverModuleName,
+				FirmwarePath: imageFirmwarePath,
+			},
+			KernelMappings: []kmmv1beta1.KernelMapping{
+				{
+					Regexp:               "^.+$",
+					ContainerImage:       driversImage,
+					InTreeModulesToRemove: []string{gpuDriverModuleName,},
+					Build: &kmmv1beta1.Build{
+						DockerfileConfigMap: &v1.LocalObjectReference{
+							Name: getDockerfileCMName(devConfig),
+						},
+						BuildArgs: []kmmv1beta1.BuildArg{
+							{
+								Name:  "DRIVERS_VERSION",
+								Value: driversVersion,
+							},
 						},
 					},
 				},
