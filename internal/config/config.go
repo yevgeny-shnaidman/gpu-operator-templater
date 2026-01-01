@@ -22,7 +22,7 @@ type TemplaterConfig struct {
 		DevicePluginImage  string `yaml:"devicePluginImage"`
 		EnableFirmware     bool   `yaml:"enableFirmware"`
 		ImageFirmwarePath  string `yaml:"imageFirmwarePath"`
-		DriverVersion      string `yaml:"driverVersion"`
+		//DriverVersion      string `yaml:"driverVersion"`
 		EnableInClusterBuild bool `yaml:"enableInClusterBuild"` 
 	} `yaml:"kmm"`
 	NodeLabeller *struct {

@@ -6,6 +6,7 @@ metadata:
 spec:
   moduleLoader:
     container:
+      imagePullPolicy: Always
       modprobe:
         moduleName: {{.KMM.KernelModuleName}}
         firmwarePath: {{.KMM.ImageFirmwarePath}}
@@ -23,3 +24,8 @@ spec:
     serviceAccountName: "{{.API.Vendor}}-gpu-operator-kmm-module-loader"
   selector:
     feature.node.kubernetes.io/pci-{{.KMM.PCIVendorID}}.present: "true"
+  tolerations:
+    - key: "some key"
+      operator: Equal
+      value: true
+      effect: NoExecute

@@ -35,9 +35,11 @@ import (
 	"{{.API.CodeRepo}}/internal/cmd"
 	"{{.API.CodeRepo}}/internal/config"
 	"{{.API.CodeRepo}}/internal/controllers"
+	"{{.API.CodeRepo}}/internal/filter"
 	"{{.API.CodeRepo}}/internal/kmmmodule"
 	{{if .NodeLabeller}}"{{.API.CodeRepo}}/internal/nodelabeller"{{end}}
 	{{if .NodeMetrics}}"{{.API.CodeRepo}}/internal/nodemetrics"{{end}}
+	"{{.API.CodeRepo}}/internal/upgrade"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -89,13 +91,17 @@ func main() {
 
 	client := mgr.GetClient()
 	kmmHandler := kmmmodule.NewKMMModule(client, scheme)
+	upgradeHandler := upgrade.NewUpgradeAPI(client)
 	{{if .NodeLabeller}}nlHandler := nodelabeller.NewNodeLabeller(scheme){{end}}
 	{{if .NodeMetrics}}nmHandler := nodemetrics.NewNodeMetrcis(scheme){{end}}
+        filter := filter.New(client)
 	dcr := controllers.NewDeviceConfigReconciler(
 		client,
-		kmmHandler{{if .NodeLabeller}},
+		kmmHandler,
+		upgradeHandler{{if .NodeLabeller}},
 		nlHandler{{end}}{{if .NodeMetrics}},
 		nmHandler{{end}},
+		filter,
                 scheme)
 	if err = dcr.SetupWithManager(mgr); err != nil {
 		cmd.FatalError(setupLogger, err, "unable to create controller", "name", controllers.DeviceConfigReconcilerName)

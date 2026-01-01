@@ -18,6 +18,6 @@ kmm:
   devicePluginImage: rocm/k8s-device-plugin 
   # the path to the firmware inside the container image
   imageFirmwarePath: testFirmwareDir/updates
-  # default driver version, will be used as a tag the image
-  driverVersion: el9-6.1.1
+  # enable builds
+  enableInClusterBuild: true
 operatorImage: quay.io/yshnaidm/test-gpu-operator
